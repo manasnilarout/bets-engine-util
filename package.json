@@ -1,0 +1,24 @@
+{
+  "name": "bets-engine-util",
+  "version": "1.0.0",
+  "description": "Utility functions for bets engine",
+  "main": "index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/manasnilarout/bets-engine-util.git"
+  },
+  "author": "\"Manas Ranjan\"",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/manasnilarout/bets-engine-util/issues"
+  },
+  "homepage": "https://github.com/manasnilarout/bets-engine-util#readme",
+  "dependencies": {
+    "dotenv": "^8.2.0",
+    "mysql": "^2.18.1",
+    "node-fetch": "^2.6.1"
+  }
+}
