@@ -185,23 +185,54 @@ const parseFinishedGames = async (category) => {
     return gameResults;
 };
 
+const getHighestSixOverScore = (records, localTeam, visitorTeam) => {
+    const scores = {
+        [localTeam]: {},
+        [visitorTeam]: {},
+    };
+
+    records.forEach(r => {
+        if (!Number(r.over)) return;
+        scores[r.batting_team][Number(r.over)] = Number(r.runs);
+    });
+
+    scores[localTeam].total = Object.values(scores[localTeam]).reduce((a, b) => a + b, 0);
+    scores[visitorTeam].total = Object.values(scores[visitorTeam]).reduce((a, b) => a + b, 0);
+
+    if (scores[localTeam].total > scores[visitorTeam].total) {
+        return `${localTeam} : ${scores[localTeam].total}`;
+    } else if (scores[localTeam].total > scores[visitorTeam].total) {
+        return `${localTeam} : ${scores[localTeam].total} | ${visitorTeam} : ${scores[visitorTeam].total}`;
+    }
+
+    return `${visitorTeam} : ${scores[visitorTeam].total}`;
+};
+
 const main = async () => {
     await connectToDb();
     const results = await getFinalResults();
 
     const oldRecordCheckQuery = "SELECT * FROM `scoreext` WHERE goalid = ? AND hometeam = ? AND visitorteam = ? AND matchdate = ? AND match_status = ?;";
-    const insertFinalResult = 'INSERT INTO `scoreext` ( `goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `won`, `createdtime`, `updatedtime`, `hometeam_score`, `visitorteam_score`, `hometeam_wickets`, `visitorteam_wickets`, `total_runs_in_match `, `top_team_bowler`, `total_match_sixes`, `hometeam_total_match_sixes `, `visitorteam_total_match_sixes `, `hometotal_match_fours`, `visitortotal_match_fours`, `1st_innings_score`, `2nd_innings_score`, `player_of_the_match  `, `batsman_to_score_a_fifty_in_the_match `, `player_to_score_most_sixes  `, `runs_at_fall_of_1st_wicket`, `team_to_make_highest_1st_6_overs_score`, `a_hundred_to_be_scored_in_the_match`, `1st_wicket_method`, `highest_opening_partnership`, `to_go_to_super_over`, `most_run_outs`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
+    const insertFinalResult = 'INSERT INTO `scoreext` ( `goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `won`, `createdtime`, `updatedtime`, `hometeam_score`, `visitorteam_score`, `hometeam_wickets`, `visitorteam_wickets`, `total_runs_in_match `, `top_team_bowler`, `total_match_sixes`, `hometeam_total_match_sixes `, `visitorteam_total_match_sixes `, `hometotal_match_fours`, `visitortotal_match_fours`, `1st_innings_score`, `2nd_innings_score`, `player_of_the_match`, `batsman_to_score_a_fifty_in_the_match `, `player_to_score_most_sixes  `, `runs_at_fall_of_1st_wicket`, `team_to_make_highest_1st_6_overs_score`, `a_hundred_to_be_scored_in_the_match`, `1st_wicket_method`, `highest_opening_partnership`, `to_go_to_super_over`, `most_run_outs`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
+    const first6OverScores = `SELECT * FROM cricketa_1cricket.scoreext q WHERE hometeam = ? AND visitorteam = ? AND matchdate = ? AND over <= 6;`;
+    const updatePlayerOfTheMatch = "UPDATE `cricketa_1cricket`.`scoreext` SET `player_of_the_match` = ? WHERE (`id` = ?);";
 
     for (const res of results) {
         const oldRecords = await runQuery(oldRecordCheckQuery, [
             res.goalId,
             res.homeTeam,
             res.visitorTeam,
-            res.matchDate,
+            res.matchDate.split('T')[0],
             'Finished',
         ]);
 
-        if (!oldRecords.results.length) {
+        const resultRecord = oldRecords.results[0];
+
+        if (!resultRecord) {
+            const sixOverScores = await runQuery(first6OverScores, [res.homeTeam, res.visitorTeam, res.matchDate.split('T')[0]]);
+
+            const highest6OverScore = getHighestSixOverScore(sixOverScores.results, res.homeTeam, res.visitorTeam);
+
             await runQuery(insertFinalResult, [
                 res.goalId,
                 res.matchId,
@@ -230,7 +261,7 @@ const main = async () => {
                 res.batsManToScoreFifties,
                 res.playerToHitMostSixes,
                 res.runsAtFirstWicketFall,
-                res.highest1st6OverScore,
+                highest6OverScore,
                 res.hundredsScoredInGame,
                 res.firstWicketMethod,
                 res.highestOpeningPartnership,
@@ -239,6 +270,11 @@ const main = async () => {
             ]);
 
             console.log('Updated new scores.');
+        }
+
+        if (resultRecord && !resultRecord.player_of_the_match && res.playerOfTheMatch) {
+            await runQuery(updatePlayerOfTheMatch, [res.playerOfTheMatch, resultRecord.id])
+            console.log('Updated player of the match details.');
         }
     }
 
