@@ -1,6 +1,5 @@
 'use strict';
-const { resolve } = require('path');
-require('dotenv').config({ path: resolve(__dirname, './.env') });
+
 const express = require("express");
 const fetch = require("node-fetch");
 const redis = require("redis");
@@ -9,7 +8,7 @@ const mysql = require('mysql');
 const moment = require('moment');
 const { DB_OPTIONS, GOAL_SERVE, BET365 } = require('./env');
 
-const PORT = process.env.PORT || 4040;
+const PORT = Number(process.env.ONE_CRICKET_SERVER) || 4040;
 const PORT_REDIS = process.env.PORT || 6379;
 
 const connection = mysql.createConnection(DB_OPTIONS);
