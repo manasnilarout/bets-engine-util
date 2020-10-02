@@ -1,4 +1,6 @@
 'use strict';
+const { resolve } = require('path');
+require('dotenv').config({ path: resolve(__dirname, './.env') });
 const express = require("express");
 const fetch = require("node-fetch");
 const redis = require("redis");
@@ -43,7 +45,7 @@ app.get("/upcoming/matches", get, (req, res) => {
     fetch(`https://api.b365api.com/v1/bet365/upcoming?sport_id=3&token=${BET365.token}`)
         .then(res => res.json())
         .then(json => {
-            set(req.route.path, json, 'EX', 60 * 60 * 24, callback);
+            set(req.route.path, json, 'EX', 60 * 60 * 24);
             res.status(200).send(json);
         })
         .catch(error => {
@@ -82,6 +84,7 @@ app.get("/upcoming/preodds", (req, res) => {
 
 //****  inplay matches *********//
 app.get("/inplay/matches", (req, res) => {
+    console.log(`https://api.b365api.com/v1/bet365/inplay_filter?sport_id=3&token=${BET365.token}`);
     fetch(`https://api.b365api.com/v1/bet365/inplay_filter?sport_id=3&token=${BET365.token}`)
         .then(res => res.json())
         .then(json => {
@@ -108,7 +111,6 @@ app.get("/inplay/liveodds", (req, res) => {
             res.status(200).send(json);
         })
         .catch(error => {
-            s
             console.error(error);
             res.status(400).send(error);
         });
@@ -685,4 +687,4 @@ app.get("/game/leader", (req, res) => {
 });
 
 //**** Game leaderboard  *********//
-app.listen(PORT, () => console.log("Server up and running on ${PORT}"));
+app.listen(PORT, () => console.log(`Server up and running on ${PORT}`));
