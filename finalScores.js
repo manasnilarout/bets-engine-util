@@ -139,7 +139,7 @@ const getMatchResults = (category) => {
         goalId: category.id,
         matchId: category.match.id,
         matchType: category.match.type + ' - ' + category.name,
-        matchDate: new Date(category.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString(),
+        matchDate: new Date(category.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString().split('T')[0],
         homeTeamScore,
         homeTeam,
         won,
@@ -213,8 +213,8 @@ const main = async () => {
     const results = await getFinalResults();
 
     const oldRecordCheckQuery = "SELECT * FROM `scoreext` WHERE goalid = ? AND hometeam = ? AND visitorteam = ? AND matchdate = ? AND match_status = ?;";
-    const insertFinalResult = 'INSERT INTO `scoreext` ( `goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `won`, `createdtime`, `updatedtime`, `hometeam_score`, `visitorteam_score`, `hometeam_wickets`, `visitorteam_wickets`, `total_runs_in_match `, `top_team_bowler`, `total_match_sixes`, `hometeam_total_match_sixes `, `visitorteam_total_match_sixes `, `hometotal_match_fours`, `visitortotal_match_fours`, `1st_innings_score`, `2nd_innings_score`, `player_of_the_match`, `batsman_to_score_a_fifty_in_the_match `, `player_to_score_most_sixes  `, `runs_at_fall_of_1st_wicket`, `team_to_make_highest_1st_6_overs_score`, `a_hundred_to_be_scored_in_the_match`, `1st_wicket_method`, `highest_opening_partnership`, `to_go_to_super_over`, `most_run_outs`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
-    const first6OverScores = `SELECT * FROM cricketa_1cricket.scoreext q WHERE hometeam = ? AND visitorteam = ? AND matchdate = ? AND over <= 6;`;
+    const insertFinalResult = 'INSERT INTO `scoreext` ( `goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `won`, `hometeam_score`, `visitorteam_score`, `hometeam_wickets`, `visitorteam_wickets`, `total_runs_in_match `, `top_team_bowler`, `total_match_sixes`, `hometeam_total_match_sixes `, `visitorteam_total_match_sixes `, `hometotal_match_fours`, `visitortotal_match_fours`, `1st_innings_score`, `2nd_innings_score`, `player_of_the_match`, `batsman_to_score_a_fifty_in_the_match `, `player_to_score_most_sixes  `, `runs_at_fall_of_1st_wicket`, `team_to_make_highest_1st_6_overs_score`, `a_hundred_to_be_scored_in_the_match`, `1st_wicket_method`, `highest_opening_partnership`, `to_go_to_super_over`, `most_run_outs`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);';
+    const first6OverScores = `SELECT * FROM cricketa_1cricket.scoreext q WHERE hometeam = ? AND visitorteam = ? AND matchdate = ? AND \`over\` <= 6;`;
     const updatePlayerOfTheMatch = "UPDATE `cricketa_1cricket`.`scoreext` SET `player_of_the_match` = ? WHERE (`id` = ?);";
 
     for (const res of results) {
@@ -242,8 +242,6 @@ const main = async () => {
                 res.matchDate,
                 res.matchType,
                 res.won,
-                new Date().toISOString(),
-                new Date().toISOString(),
                 res.homeTeamScore,
                 res.visitorTeamScore,
                 res.homeTeamWickets,
@@ -280,5 +278,5 @@ const main = async () => {
 
     process.exit(0);
 };
-
+// main();
 module.exports = { main };

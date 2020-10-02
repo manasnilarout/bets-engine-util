@@ -80,7 +80,7 @@ const parseInProgressGame = async (category) => {
                 homeTeam: cat.match.localteam.name,
                 visitorTeam: cat.match.visitorteam.name,
                 matchType: cat.match.type,
-                matchDate: new Date(cat.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString(),
+                matchDate: new Date(cat.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString().split('T')[0],
                 lastOver: getLastOverScore(cat.match.commentaries.commentary).over,
                 lastOverScore: getLastOverScore(cat.match.commentaries.commentary).runs,
                 battingTeam: getBattingTeam(cat.match),
@@ -98,7 +98,7 @@ const parseInProgressGame = async (category) => {
             homeTeam: category.match.localteam.name,
             visitorTeam: category.match.visitorteam.name,
             matchType: category.match.type,
-            matchDate: new Date(category.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString(),
+            matchDate: new Date(category.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString().split('T')[0],
             lastOver: getLastOverScore(category.match.commentaries.commentary).over,
             lastOverScore: getLastOverScore(category.match.commentaries.commentary).runs,
             battingTeam: getBattingTeam(category.match),
@@ -118,8 +118,8 @@ const getLastOverScore = (commentaries) => {
 
 const main = async () => {
     const scores = await getScores();
-    const oldRecordCheckQuery = "SELECT * FROM `scoreext` WHERE goalid = ? AND hometeam = ? AND visitorteam = ? AND matchdate = ? AND batting_team = ? AND over = ?;";
-    const insertNewRecordQuey = "INSERT INTO `scoreext` (`goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `over`, `runs`, `createdtime`, `updatedtime`, `batting_team`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    const oldRecordCheckQuery = "SELECT * FROM `scoreext` WHERE goalid = ? AND hometeam = ? AND visitorteam = ? AND matchdate = ? AND batting_team = ? AND `over` = ?;";
+    const insertNewRecordQuey = "INSERT INTO `scoreext` (`goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `over`, `runs`, `batting_team`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
 
 
     for (const score of scores) {
@@ -143,8 +143,6 @@ const main = async () => {
                 score.matchType,
                 score.lastOver,
                 score.lastOverScore,
-                new Date().toISOString(),
-                new Date().toISOString(),
                 score.battingTeam
             ]);
             console.log('Updated new scores.');
@@ -171,5 +169,5 @@ const loop = async () => {
         await delay(5000);
     }
 };
-handler();
-// module.exports = { handler };
+// handler();
+module.exports = { handler };
