@@ -56,6 +56,11 @@ app.get("/upcoming/matches", get, (req, res) => {
 //****  upcoming Preodds *********//
 app.get("/upcoming/preodds", (req, res) => {
     const FI = req.param('FI');
+
+    if (!FI) {
+        return res.status(404).send({ status: 0, error: 'FI ID is expected/' });
+    }
+
     console.log(FI)
 
     redisClient.get(FI, (error, data) => {
@@ -83,7 +88,6 @@ app.get("/upcoming/preodds", (req, res) => {
 
 //****  inplay matches *********//
 app.get("/inplay/matches", (req, res) => {
-    console.log(`https://api.b365api.com/v1/bet365/inplay_filter?sport_id=3&token=${BET365.token}`);
     fetch(`https://api.b365api.com/v1/bet365/inplay_filter?sport_id=3&token=${BET365.token}`)
         .then(res => res.json())
         .then(json => {
@@ -98,7 +102,11 @@ app.get("/inplay/matches", (req, res) => {
 //****  inplay  liveodds *********//
 app.get("/inplay/liveodds", (req, res) => {
     const FI = req.param('FI');
-    console.log(FI)
+
+    if (!FI) {
+        return res.status(404).send({ status: 0, error: 'FI ID is expected/' });
+    }
+
     fetch(`https://api.b365api.com/v1/bet365/event?token=${BET365.token}&FI=` + FI)
         .then(res => res.json())
         .then(json => {
@@ -132,8 +140,17 @@ const goalservelive = (req, res, next) => {
 
 app.get("/goalserve/live", (req, res) => {
     const hometeam = req.param('hometeam');
-    console.log(hometeam);
+
+    if (!hometeam) {
+        return res.status(404).send({ status: 0, error: '"hometeam" param is expected.' });
+    }
+
     const vistorteam = req.param('vistorteam');
+
+    if (!vistorteam) {
+        return res.status(404).send({ status: 0, error: '"vistorteam" param is expected.' });
+    }
+
     fetch(`http://www.goalserve.com/getfeed/${GOAL_SERVE.token}/cricket/livescore?json=1`)
         .then(res => res.json())
         .then(json => {
