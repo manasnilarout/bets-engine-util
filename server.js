@@ -1,11 +1,11 @@
-"use strict";
+'use strict';
 const express = require("express");
 const fetch = require("node-fetch");
 const redis = require("redis");
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const moment = require('moment');
-const { DB_OPTIONS } = require('./env');
+const { DB_OPTIONS, GOAL_SERVE, BET365 } = require('./env');
 
 const PORT = process.env.PORT || 4040;
 const PORT_REDIS = process.env.PORT || 6379;
@@ -40,7 +40,7 @@ const get = (req, res, next) => {
 
 //****  upcoming matches *********//
 app.get("/upcoming/matches", get, (req, res) => {
-    fetch("https://api.b365api.com/v1/bet365/upcoming?sport_id=3&token=61925-2bBIpJrOkeLtND")
+    fetch(`https://api.b365api.com/v1/bet365/upcoming?sport_id=3&token=${BET365.token}`)
         .then(res => res.json())
         .then(json => {
             set(req.route.path, json, 'EX', 60 * 60 * 24, callback);
@@ -51,7 +51,6 @@ app.get("/upcoming/matches", get, (req, res) => {
             res.status(400).send(error);
         });
 });
-
 
 //****  upcoming Preodds *********//
 app.get("/upcoming/preodds", (req, res) => {
@@ -66,7 +65,7 @@ app.get("/upcoming/preodds", (req, res) => {
         }
         else {
             console.log('ouside redis cache')
-            fetch("https://api.b365api.com/v3/bet365/prematch?token=61925-2bBIpJrOkeLtND&FI=" + FI)
+            fetch(`https://api.b365api.com/v3/bet365/prematch?token=${BET365.token}&FI=` + FI)
                 .then(res => res.json())
                 .then(json => {
                     set(FI, json, 'EX', 60 * 60 * 24);
@@ -81,11 +80,9 @@ app.get("/upcoming/preodds", (req, res) => {
     });
 });
 
-
-
 //****  inplay matches *********//
 app.get("/inplay/matches", (req, res) => {
-    fetch("https://api.b365api.com/v1/bet365/inplay_filter?sport_id=3&token=61925-2bBIpJrOkeLtND")
+    fetch(`https://api.b365api.com/v1/bet365/inplay_filter?sport_id=3&token=${BET365.token}`)
         .then(res => res.json())
         .then(json => {
             res.status(200).send(json);
@@ -100,7 +97,7 @@ app.get("/inplay/matches", (req, res) => {
 app.get("/inplay/liveodds", (req, res) => {
     const FI = req.param('FI');
     console.log(FI)
-    fetch("https://api.b365api.com/v1/bet365/event?token=61925-2bBIpJrOkeLtND&FI=" + FI)
+    fetch(`https://api.b365api.com/v1/bet365/event?token=${BET365.token}&FI=` + FI)
         .then(res => res.json())
         .then(json => {
             for (var i = 0; i < json['results'].length; i++) {
@@ -136,7 +133,7 @@ app.get("/goalserve/live", (req, res) => {
     const hometeam = req.param('hometeam');
     console.log(hometeam);
     const vistorteam = req.param('vistorteam');
-    fetch("http://www.goalserve.com/getfeed/3df1c289b2d6458507aa08d82d5916b4/cricket/livescore?json=1")
+    fetch(`http://www.goalserve.com/getfeed/${GOAL_SERVE.token}/cricket/livescore?json=1`)
         .then(res => res.json())
         .then(json => {
             const category = json['scores']['category'];
@@ -224,7 +221,6 @@ app.get("/goalserve/live", (req, res) => {
                 console.log('The data from users table are: \n', rows);
             });
                             }*/
-
                         //console.log(score.legth);
                         console.log(category[i]['match'].comment.post);
                         post = category[i]['match'].comment.post;
@@ -239,7 +235,6 @@ app.get("/goalserve/live", (req, res) => {
                         // var name = (JSON.parse(score))[0].name;
                         console.log(arraycheck + ":arraycheck");
                         if (inningnum == '1') {
-
                             console.log(inningnum);
                             var name = (JSON.parse(score)).name;
                             var obj = (JSON.parse(score)).total.tot;
@@ -251,14 +246,10 @@ app.get("/goalserve/live", (req, res) => {
 
                             if (name.includes(apphometeam)) {
                                 batting_team = apphometeam;
-                            }
-
-                            else {
+                            } else {
                                 batting_team = appvisitorteam;
                             }
-
                         } else {
-
                             var name = (JSON.parse(score)[0]).name;
                             var ininngsby = (JSON.parse(score)[0]).name;
                             var obj = (JSON.parse(score)[0]).total.tot;
@@ -308,7 +299,6 @@ app.get("/goalserve/live", (req, res) => {
                         res.contentType('application/json');
                         res.status(200).send(JSON.stringify(result));
                     }
-
                 }
             }
 
@@ -322,8 +312,7 @@ app.get("/goalserve/live", (req, res) => {
 //****  status fininshed  *********//
 app.get("/goalserve/fininshed", (req, res) => {
     console.log("insde call");
-
-    fetch("http://www.goalserve.com/getfeed/3df1c289b2d6458507aa08d82d5916b4/cricket/livescore?json=1")
+    fetch(`http://www.goalserve.com/getfeed/${GOAL_SERVE.token}/cricket/livescore?json=1`)
         .then(res => res.json())
         .then(json => {
             const category = json['scores']['category'];
@@ -374,7 +363,6 @@ app.get("/goalserve/fininshed", (req, res) => {
                     connection.query("SELECT goalid FROM scoreext where hometeam='" + hometeam + "' and match_status='Finished'", (err, rows) => {
                         if (err) throw err;
                         if (rows.length == 0) {
-
                             console.log("finished");
                             goalid = category[i].id;
                             matchtype = category[i]['match'].type;
@@ -405,7 +393,6 @@ app.get("/goalserve/fininshed", (req, res) => {
                                         fifty_scored_inmatch = 'yes';
                                         batsman_to_score_a_fifty_in_the_match = 'Not available';
                                         batsman_to_score_a_fifty_in_the_match = category[i]['match'].inning[0].batsmanstats.player[j].batsman;
-
                                     }
                                 }
                             }
@@ -422,7 +409,6 @@ app.get("/goalserve/fininshed", (req, res) => {
                                 var scored = category[i]['match'].inning[1].batsmanstats.player[k].r;
                                 if (scored >= 100) {
                                     hundred_scored_inmatch = 'yes';
-
                                 }
                                 else {
                                     if (scored >= 50) {
@@ -447,7 +433,6 @@ app.get("/goalserve/fininshed", (req, res) => {
                                 firstiningfours = 0;
                                 firstiningsixes = 0;
                             }
-
 
                             if (category[i]['match'].localteam.winner == "true") {
                                 won = hometeam;
@@ -487,18 +472,13 @@ app.get("/goalserve/fininshed", (req, res) => {
                             connection.query("INSERT INTO scoreext (goalid,matchid,hometeam, visitorteam,match_status,won,matchdate,matchtype,createdtime,updatedtime,total_runs_in_match,total_match_sixes,total_match_fours,1st_innnings_score,player_of_the_match,batsman_to_score_a_fifty_in_the_match,a_hundred_to_be_scored_in_the_match) VALUES('" + goalid + "','" + matchid + "','" + hometeam + "','" + visitorteam + "','" + staus + "','" + won + "','" + matchdate + "','" + matchtype + "','" + created + "','" + created + "','" + total_runs_in_match + "','" + total_match_sixes + "','" + total_match_fours + "','" + first_innnings_score + "','" + player_of_the_match + "','" + batsman_to_score_a_fifty_in_the_match + "','" + hundred_scored_inmatch + "');", (err, rows) => {
                                 if (err) throw err;
                                 console.log('The data from users table are: \n', rows.length);
-
                             });
                         }
-
                         else {
                             console.log("do nothing");
                         }
                     });
-
-
                 }
-
                 console.log(i);
             }
         })
@@ -508,25 +488,18 @@ app.get("/goalserve/fininshed", (req, res) => {
         });
 });
 
-
-
 //****  port  *********//
-
 const live = (req, res, next) => {
     let key = req.route.path;
     redisClient.get('liveodd', (error, data) => {
         if (error) res.status(400).send(err);
         if (data !== null) {
-
             console.log('inside redis cache')
-
             res.status(200).send(JSON.parse(data));
         }
         else next();
     });
 }
-
-
 
 app.get("/inplay/overodds", live, (req, res) => {
     const FI = req.param('FI');
@@ -540,7 +513,7 @@ app.get("/inplay/overodds", live, (req, res) => {
     const arr = [];
     var obj = {};
 
-    fetch("https://api.b365api.com/v1/bet365/event?token=61925-2bBIpJrOkeLtND&FI=" + FI)
+    fetch(`https://api.b365api.com/v1/bet365/event?token=${BET365.token}&FI=` + FI)
         .then(res => res.json())
         .then(json => {
             const category = json['results'];
@@ -554,13 +527,11 @@ app.get("/inplay/overodds", live, (req, res) => {
                     if (NA1.includes('Match Winner 2-Way')) {
                         const NA = category[0][i];
                         flag = 'yes';
-
                         // console.log("inseide true"+flag);
                         temp = temp + '{"oddname:"' + NA + '",';
                         arr.push(NA);
                         // obj.'oddname'+i=NA;
                         //  console.log(temp);
-
                         // obj.'oddname'+i=NA;
                     }
 
@@ -572,16 +543,12 @@ app.get("/inplay/overodds", live, (req, res) => {
                         //   console.log(temp);
                         arr.push(NA);
                         // obj.'oddname'+i=NA;
-
                     }
 
                     /* else if(NA1.includes('Overs Runs')){
-                                 
                                 flag='yes'; 
                            temp=temp + '{"oddname:"'+NA+'",'; 
-
                            // 	console.log(temp);
-                           
                                    arr.push(NA);
                                     obj.'oddname'+i=NA;
                      }*/
@@ -591,26 +558,19 @@ app.get("/inplay/overodds", live, (req, res) => {
                         const NA = category[0][i];
                         temp = temp + '{"oddname:"' + NA + '",';
                         // console.log("inseide true"+flag);
-
                         //  console.log(temp);
-
                         arr.push(NA);
                         ////  obj.'oddname'+i=NA;
-
                     }
-
 
                     else if (NA1.includes('rd Over,' || 'st Over,')) {
                         flag = 'yes';
                         const NA = category[0][i];
                         temp = temp + '{"oddname:"' + NA + '",';
                         // console.log("inseide true"+flag);
-
                         //  console.log(temp);
-
                         arr.push(NA);
                         //  obj.'oddname'+i=NA;
-
                     }
 
                     else if (NA1.includes('st Over,')) {
@@ -634,17 +594,14 @@ app.get("/inplay/overodds", live, (req, res) => {
                     if (category[0][i].type == "PA") {
 
                         if (category[0][i].OR == 0) {
-
                             const NA = category[0][i];
                             //console.log(category[0][i].NA);
                             const OD = category[0][i].OD;
                             arr.push(NA);
                             //  //   console.log(temp);
-
                         }
 
                         if (category[0][i].OR == 1) {
-
                             const NA = category[0][i];
                             const OD = category[0][i].OD;
                             temp = temp + '"' + NA + '"' + ":" + '"' + OD + '"' + '},';
@@ -657,7 +614,6 @@ app.get("/inplay/overodds", live, (req, res) => {
                 }
             }
             // var result = (temp.replace("undefined","")).slice(0, -1);
-
             res.status(200).send(JSON.stringify({ arr }));
         })
         .catch(error => {
@@ -684,11 +640,7 @@ app.get("/daily/update", (req, res) => {
         console.error(error);
         res.status(400).send(error);
     }
-
 });
-
-
-
 
 //****  port  *********//
 app.get("/global/leader", (req, res) => {
@@ -709,9 +661,7 @@ app.get("/global/leader", (req, res) => {
         console.error(error);
         res.status(400).send(error);
     }
-
 });
-
 
 //****  leaderboard  *********//
 app.get("/game/leader", (req, res) => {
@@ -733,7 +683,6 @@ app.get("/game/leader", (req, res) => {
         res.status(400).send(error);
     }
 });
-
 
 //**** Game leaderboard  *********//
 app.listen(PORT, () => console.log("Server up and running on ${PORT}"));

@@ -10,5 +10,8 @@ module.exports = {
     },
     GOAL_SERVE: {
         token: process.env.GOALSERVE_TOKEN
-    }
+    },
+    BET365: {
+        token: process.env.BET365_API_TOKEN
+    },
 };
