@@ -6,13 +6,17 @@ const redis = require("redis");
 const bodyParser = require('body-parser');
 const mysql = require('mysql');
 const moment = require('moment');
-const { DB_OPTIONS, GOAL_SERVE, BET365 } = require('./env');
+
+const RedisDb = require('./util/redis.util');
+const { DB_OPTIONS, GOAL_SERVE, BET365, REDIS_OPTIONS } = require('./env');
 
 const PORT = Number(process.env.ONE_CRICKET_SERVER) || 4040;
 const PORT_REDIS = process.env.PORT || 6379;
 
 const connection = mysql.createConnection(DB_OPTIONS);
-const redisClient = redis.createClient(PORT_REDIS);
+const redisClient = redis.createClient(REDIS_OPTIONS.port, REDIS_OPTIONS.host);
+
+const redisDb = new RedisDb(REDIS_OPTIONS);
 
 var batting_team;
 
@@ -138,193 +142,40 @@ const goalservelive = (req, res, next) => {
     });
 }
 
-app.get("/goalserve/live", (req, res) => {
+app.get("/goalserve/live", async (req, res) => {
     const hometeam = req.param('hometeam');
-
-    if (!hometeam) {
-        return res.status(404).send({ status: 0, error: '"hometeam" param is expected.' });
-    }
-
     const vistorteam = req.param('vistorteam');
 
-    if (!vistorteam) {
-        return res.status(404).send({ status: 0, error: '"vistorteam" param is expected.' });
-    }
+    res.contentType('application/json');
 
-    fetch(`http://www.goalserve.com/getfeed/${GOAL_SERVE.token}/cricket/livescore?json=1`)
-        .then(res => res.json())
-        .then(json => {
-            const category = json['scores']['category'];
-            var cantsize = category.length;
-            var result;
-            var overended;
-            var score;
-            var post;
-            var total;
-            var total1;
-            var goalid;
-            var matchid;
-            var matchdate;
-            var over;
-            var runs;
-            var wickets = 'null';
-            var matchdate;
-            var matchtype;
-            var batting_team;
+    try {
+        const results = await redisDb.get('goalServeLive');
+        const scores = results ? JSON.parse(results) : [];
 
-            var created = moment().format('YYYY-MM-DD hh:mm:ss')
-            for (let i = 0; i < cantsize; i++) {
-                var match = category[i]['match'];
-                const teamTypes = {
-                    VISITOR_TEAM: 'visitorteam',
-                    LOCAL_TEAM: 'localteam',
-                };
+        if (hometeam && vistorteam) {
 
-                const getBattingTeam = (match) => {
-                    let inning;
-                    const playersList = getTeamPlayerList(match);
-                    if (Array.isArray(match.inning)) {
-                        inning = match.inning[1];
-                    } else {
-                        inning = match.inning;
-                    }
+            if (Array.isArray(scores)) {
+                const result = scores.find(sc => sc.homeTeam === hometeam && sc.visitorTeam === vistorteam);
 
-                    const batsManName = inning.batsmanstats.player[0].batsman;
+                if (!result) return res.status(404).send({ error: 'No scores found for given teams', hometeam, vistorteam });
 
-                    if (playersList[teamTypes.VISITOR_TEAM].indexOf(batsManName) > -1) {
-                        return match[teamTypes.VISITOR_TEAM].name;
-                    }
-
-                    console.log("match[teamTypes.LOCAL_TEAM].name:" + match[teamTypes.LOCAL_TEAM].name);
-                    return match[teamTypes.LOCAL_TEAM].name;
-                };
-
-                const getTeamPlayerList = (match) => {
-                    return {
-                        [teamTypes.VISITOR_TEAM]: match.lineups[teamTypes.VISITOR_TEAM].player.map(p => p.name),
-                        [teamTypes.LOCAL_TEAM]: match.lineups[teamTypes.LOCAL_TEAM].player.map(p => p.name),
-                    }
-                };
-
-                //const categories = (json['scores']['category']['match']);
-                var staus = category[i]['match'].status;
-                matchtype = category[i]['match'].type;
-                if (staus == "In Progress") {
-                    goalid = category[i].id;
-                    console.log(goalid)
-                    console.log("status:" + category[i]['match'].status);
-                    console.log(category[i]['match'].localteam.name);
-                    console.log(category[i]['match'].visitorteam.name);
-                    console.log("Match Date:" + category[i]['match'].date);
-                    matchdate = category[i]['match'].date;
-                    console.log("Match ID:" + category[i]['match'].id);
-                    console.log("updated date ID:" + created);
-                    over = category[i]['match'].commentaries.commentary[0].over;
-                    over = (--over);
-                    console.log("over :" + over);
-                    runs = category[i]['match'].commentaries.commentary[0].runs;
-                    console.log("runs :" + runs);
-                    matchid = category[i]['match'].id;
-                    var apphometeam = category[i]['match'].localteam.name;
-                    console.log("apphometeam :" + apphometeam);
-                    var appvisitorteam = category[i]['match'].visitorteam.name;
-                    if (hometeam.trim() == apphometeam.trim()) {
-                        console.log(category[i]['match'].localteam.name);
-                        console.log(category[i]['match'].visitorteam.name);
-                        var overended = category[i]['match'].commentaries.commentary[0].over_ended;
-
-                        /*   if(overended=="True"){
-                             connection.query("INSERT INTO scoreext (goalid,matchid,hometeam, visitorteam,match_status,matchdate,matchtype,createdtime,updatedtime,over,runs,score,wickets) VALUES('"+goalid+"','"+matchid+"','"+apphometeam+"','"+appvisitorteam+"','"+staus+"','"+matchdate+"',"+matchtype+"','"+created+"','"+created+"','"+over+"','"+runs+"','"+score+"','"+wickets+"')" , (err, rows) => {
-                if(err) throw err;
-                console.log('The data from users table are: \n', rows);
-            });
-                            }*/
-                        //console.log(score.legth);
-                        console.log(category[i]['match'].comment.post);
-                        post = category[i]['match'].comment.post;
-
-                        score = category[i]['match']['inning'];
-                        // score=({"score": score})
-                        score = (JSON.stringify(score));
-                        console.log(score);
-                        var inningnum = (JSON.parse(score)).inningnum;
-                        var arraycheck = Array.isArray(score);
-
-                        // var name = (JSON.parse(score))[0].name;
-                        console.log(arraycheck + ":arraycheck");
-                        if (inningnum == '1') {
-                            console.log(inningnum);
-                            var name = (JSON.parse(score)).name;
-                            var obj = (JSON.parse(score)).total.tot;
-                            var wickets = (JSON.parse(score)).total.wickets;
-                            // console.log(name+" "+obj+"/"+wickets);
-                            // total =name+" "+obj+"/"+wickets;
-                            total = ({ "Team": name, "score": obj, "wickets": wickets });
-                            total1 = ({});
-
-                            if (name.includes(apphometeam)) {
-                                batting_team = apphometeam;
-                            } else {
-                                batting_team = appvisitorteam;
-                            }
-                        } else {
-                            var name = (JSON.parse(score)[0]).name;
-                            var ininngsby = (JSON.parse(score)[0]).name;
-                            var obj = (JSON.parse(score)[0]).total.tot;
-                            var wickets = (JSON.parse(score)[0]).total.wickets;
-                            // console.log(name+" "+obj+"/"+wickets);
-                            // total =name+" "+obj+"/"+wickets;
-                            total = ({ "Team": name, "score": obj, "wickets": wickets });
-
-                            // console.log(JSON.stringify(total));
-
-                            var name1 = (JSON.parse(score)[1]).name;
-                            var obj1 = (JSON.parse(score)[1]).total.tot;
-                            var wickets1 = (JSON.parse(score)[1]).total.wickets;
-
-                            //console.log(name+" "+obj+"/"+wickets);
-                            // total1 =name+" "+obj+"/"+wickets;
-                            total1 = ({ "Team": name1, "score": obj1, "wickets": wickets1 });
-                            //   console.log(JSON.stringify(total1));
-
-                            if (name1.includes(apphometeam)) {
-                                batting_team = apphometeam;
-                            } else {
-                                batting_team = appvisitorteam;
-                            }
-                        }
-
-                        if (inningnum == 'undefined') {
-                            console.log("inningnum array");
-                        }
-
-                        result = ({ "overended": overended, "firstinnings": total, "secondinnnings": total1, "post": post, "batting_team": batting_team });
-                        // console.log(result.toString())
-                        redisClient.del('goalservelive', function (err, result) {
-
-                            if (err) {
-                                console.log(err);
-                                // callback(err,null);
-                                return;
-                            }
-
-                            // callback(null,result);
-                        });
-
-                        redisClient.set('goalservelive', JSON.stringify(result), redis.print);
-                        redisClient.expire('goalservelive', 2);
-
-                        res.contentType('application/json');
-                        res.status(200).send(JSON.stringify(result));
-                    }
-                }
+                return res.send(result);
             }
 
-        })
-        .catch(error => {
-            console.error(error);
-            res.status(400).send(error);
-        });
+            if (scores.homeTeam === hometeam && scores.visitorTeam === vistorteam) {
+                return res.send(result);
+            } else {
+                return res.status(404).send({ error: 'No scores found for given teams', hometeam, vistorteam });
+            }
+
+            return res.status(404).send({ error: 'No scores found for given teams', hometeam, vistorteam });
+        }
+
+        return res.send(results);
+    } catch (err) {
+        console.log('There was an error while getting live scores.');
+        res.status(500).send({ message: 'There was an error while getting live scores.', err });
+    }
 });
 
 //****  status fininshed  *********//
@@ -703,4 +554,7 @@ app.get("/game/leader", (req, res) => {
 });
 
 //**** Game leaderboard  *********//
-app.listen(PORT, () => console.log(`Server up and running on ${PORT}`));
+app.listen(PORT, async () => {
+    console.log(`Server up and running on ${PORT}`);
+    await redisDb.connect(REDIS_OPTIONS);
+});

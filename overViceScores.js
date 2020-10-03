@@ -64,12 +64,62 @@ const getTeamPlayerList = (match) => {
     }
 };
 
+const getCurrentInningScore = (match) => {
+    let inning;
+    let firstInning;
+
+    if (Array.isArray(match.inning)) {
+        inning = match.inning.find(i => i.inningnum === '2');
+        firstInning = match.inning.find(i => i.inningnum === '1');
+    } else {
+        inning = match.inning;
+    }
+
+    const currentBatsMan = inning.batsmanstats.player.filter(bm => bm.status === 'not out');
+    const currentBowler = inning.bowlers.player.find(bo => bo.ball = 'True');
+
+    const currentInningScores = Object.assign(getRefinedInningStats(inning), {
+        batsmen: currentBatsMan,
+        bowler: currentBowler
+    });
+
+    const latestScore = match.commentaries && match.commentaries.commentary[0] || undefined;
+
+    const currentOverStats = latestScore ? {
+        over: parseFloat(latestScore.over),
+        overEnded: latestScore.over_ended === 'True' ? true : false,
+        ballPost: latestScore.post,
+        runs: latestScore.runs
+    } : undefined;
+
+    return {
+        firstinnings: firstInning ? getRefinedInningStats(firstInning) : currentInningScores,
+        secondinnnings: firstInning ? currentInningScores : undefined,
+        currentOverStats,
+        post: match.comment.post,
+    };
+};
+
+const getRefinedInningStats = (inning) => {
+    return {
+        inningNumber: Number(inning.inningnum),
+        team: inning.name.replace(/\s\d\sINN/g, ''),
+        score: inning.total.tot,
+        wickets: inning.total.wickets,
+        overallScores: inning.total
+    }
+};
+
 const parseInProgressGame = async (category) => {
     const gameRealTimeStats = [];
 
     if (Array.isArray(category)) {
         for (const cat of category) {
             if (cat.match.status !== 'In Progress') {
+                continue;
+            }
+
+            if (!cat.match.commentaries) {
                 continue;
             }
 
@@ -81,9 +131,10 @@ const parseInProgressGame = async (category) => {
                 visitorTeam: cat.match.visitorteam.name,
                 matchType: cat.match.type,
                 matchDate: new Date(cat.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString().split('T')[0],
-                lastOver: getLastOverScore(cat.match.commentaries.commentary).over,
-                lastOverScore: getLastOverScore(cat.match.commentaries.commentary).runs,
+                lastOver: cat.match.commentaries ? getLastOverScore(cat.match.commentaries.commentary).over : 0,
+                lastOverScore: cat.match.commentaries ? getLastOverScore(cat.match.commentaries.commentary).runs : 0,
                 battingTeam: getBattingTeam(cat.match),
+                moreStats: getCurrentInningScore(cat.match),
             });
         }
     } else {
@@ -102,6 +153,7 @@ const parseInProgressGame = async (category) => {
             lastOver: getLastOverScore(category.match.commentaries.commentary).over,
             lastOverScore: getLastOverScore(category.match.commentaries.commentary).runs,
             battingTeam: getBattingTeam(category.match),
+            scores: getCurrentInningScore(category.match),
         });
     }
 
@@ -110,6 +162,11 @@ const parseInProgressGame = async (category) => {
 
 const getLastOverScore = (commentaries) => {
     const finishedOver = commentaries.find(sc => sc.over_ended === 'True');
+
+    if (!finishedOver) {
+        return {};
+    }
+
     return {
         over: parseInt(finishedOver.over) + 1,
         runs: finishedOver.runs
@@ -170,4 +227,4 @@ const loop = async () => {
     }
 };
 // handler();
-module.exports = { handler };
+module.exports = { handler, parseInProgressGame };
