@@ -19,14 +19,21 @@ const collectAndParseScores = async () => {
     }
 };
 
-const main = async () => {
-    await redis.connect(REDIS_OPTIONS);
+const main = async (isFirstTime) => {
+
+    if (isFirstTime) {
+        console.log('connecting to redis.');
+        await redis.connect(REDIS_OPTIONS);
+    }
+
     await collectAndParseScores();
 };
 
 const loop = async () => {
+    let isFirstTime = true;
     while (true) {
-        await main();
+        await main(isFirstTime);
+        isFirstTime = false;
         console.log('Waiting');
         await delay(5000);
     }
