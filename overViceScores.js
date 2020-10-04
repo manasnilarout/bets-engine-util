@@ -43,7 +43,7 @@ const getBattingTeam = (match) => {
     let inning;
     const playersList = getTeamPlayerList(match);
     if (Array.isArray(match.inning)) {
-        inning = match.inning[1];
+        inning = match.inning.find(i => i.inningnum === '2');
     } else {
         inning = match.inning;
     }
@@ -76,7 +76,7 @@ const getCurrentInningScore = (match) => {
     }
 
     const currentBatsMan = inning.batsmanstats.player.filter(bm => bm.status === 'not out');
-    const currentBowler = inning.bowlers.player.find(bo => bo.ball = 'True');
+    const currentBowler = inning.bowlers.player.find(bo => bo.ball === 'True');
 
     const currentInningScores = Object.assign(getRefinedInningStats(inning), {
         batsmen: currentBatsMan,
