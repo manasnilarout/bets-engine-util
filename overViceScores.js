@@ -161,6 +161,10 @@ const parseInProgressGame = async (category) => {
 };
 
 const getLastOverScore = (commentaries) => {
+    if (!commentaries) {
+        return {};
+    }
+
     const finishedOver = commentaries.find(sc => sc.over_ended === 'True');
 
     if (!finishedOver) {
