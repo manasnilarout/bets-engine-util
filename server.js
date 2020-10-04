@@ -180,6 +180,7 @@ app.get("/goalserve/live", async (req, res) => {
 
 //****  status fininshed  *********//
 app.get("/goalserve/fininshed", (req, res) => {
+    return res.status(404).send({ status: 0, message: 'API isn\'t ready yet.' });
     console.log("insde call");
     fetch(`http://www.goalserve.com/getfeed/${GOAL_SERVE.token}/cricket/livescore?json=1`)
         .then(res => res.json())
@@ -344,7 +345,7 @@ app.get("/goalserve/fininshed", (req, res) => {
                             });
                         }
                         else {
-                            console.log("do nothing");
+                            return res.status(404).send({ status: 0, message: 'No finished matches.' });
                         }
                     });
                 }
@@ -372,6 +373,11 @@ const live = (req, res, next) => {
 
 app.get("/inplay/overodds", live, (req, res) => {
     const FI = req.param('FI');
+
+    if (!FI) {
+        return res.status(400).send({ status: 0, message: 'FI is a mandatory param.' });
+    }
+
     const hometeam = req.param('hometeam');
     const vistorteam = req.param('vistorteam');
 
@@ -500,14 +506,13 @@ app.get("/daily/update", (req, res) => {
     try {
         var created = moment().format('YYYY-MM-DD hh:mm:ss')
         connection.query("INSERT INTO transection ( user_id,amount,type,transaction_status,transection_mode,created_date) VALUES('" + userid + "','100','bonus','SUCCESS','bonus_amount','" + created + "')", (err, rows) => {
-            if (err) throw err;
+            if (err) return res.status(500).send({ success: 0, err });
             console.log('The data from users table are: \n', rows);
             res.status(200).send(JSON.stringify({ 'success': '1' }));
         });
-    }
-    catch (error) {
+    } catch (error) {
         console.error(error);
-        res.status(400).send(error);
+        return res.status(500).send(error);
     }
 });
 
@@ -515,12 +520,16 @@ app.get("/daily/update", (req, res) => {
 app.get("/global/leader", (req, res) => {
     const token = req.param('token');
     var userid = req.param('userid');
+
+    if (!userid) {
+        return res.status(400).send({status:0, message: 'userid is a mandatory field.'});
+    }
     console.log(userid)
     var results;
 
     try {
-        connection.query("Select * FROM main_leaderboard ORDER BY rank ASC limit 0,10", (err, result, fields) => {
-            if (err) throw err;
+        connection.query("Select * FROM main_leaderboard ORDER BY `rank` ASC limit 0,10", (err, result, fields) => {
+            if (err) return res.status(500).send({ success: 0, err });
             console.log('The data from users table are: \n', result);
 
             res.status(200).send(JSON.stringify({ result }));
@@ -540,8 +549,8 @@ app.get("/game/leader", (req, res) => {
     var results;
 
     try {
-        connection.query("Select * FROM gameleaderboard where fid='" + fi + "' ORDER BY rank ASC limit 0,10", (err, result, fields) => {
-            if (err) throw err;
+        connection.query("Select * FROM gameleaderboard where fid='" + fi + "' ORDER BY `rank` ASC limit 0,10", (err, result, fields) => {
+            if (err) return res.status(500).send({ success: 0, err });
             // console.log('The data from users table are: \n', result);
 
             res.status(200).send(JSON.stringify({ result }));
