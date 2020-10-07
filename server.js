@@ -152,10 +152,10 @@ app.get("/goalserve/live", async (req, res) => {
         const results = await redisDb.get('goalServeLive');
         const scores = results ? JSON.parse(results) : [];
 
-        if (hometeam && vistorteam) {
+        if (hometeam || vistorteam) {
 
             if (Array.isArray(scores)) {
-                const result = scores.find(sc => sc.homeTeam === hometeam && sc.visitorTeam === vistorteam);
+                const result = scores.find(sc => sc.homeTeam === hometeam || sc.visitorTeam === vistorteam);
 
                 if (!result) return res.status(404).send({ error: 'No scores found for given teams', hometeam, vistorteam });
 
@@ -167,8 +167,6 @@ app.get("/goalserve/live", async (req, res) => {
             } else {
                 return res.status(404).send({ error: 'No scores found for given teams', hometeam, vistorteam });
             }
-
-            return res.status(404).send({ error: 'No scores found for given teams', hometeam, vistorteam });
         }
 
         return res.send(results);
