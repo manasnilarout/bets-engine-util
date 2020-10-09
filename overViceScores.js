@@ -94,7 +94,7 @@ const getCurrentInningScore = (match) => {
 
     return {
         firstinnings: firstInning ? getRefinedInningStats(firstInning) : currentInningScores,
-        secondinnnings: firstInning ? currentInningScores : undefined,
+        secondinnnings: firstInning ? currentInningScores : {},
         currentOverStats,
         post: match.comment.post,
     };
