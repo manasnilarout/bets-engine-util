@@ -32,7 +32,7 @@ try:
     print(f'Disabling safe update.\n- {disable_safe_update}')
     cursor.execute(disable_safe_update)
 
-    print(f'Deleting records older than 30 days.\n- {query}')
+    print(f'Deleting records older than {persistance_days} days.\n- {query}')
     cursor.execute(query)
 
     print('Clean up finished.')
