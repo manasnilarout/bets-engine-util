@@ -76,7 +76,7 @@ const getCurrentInningScore = (match) => {
     }
 
     const currentBatsMan = inning.batsmanstats.player.filter(bm => bm.status === 'not out');
-    const currentBowler = inning.bowlers.player.find(bo => bo.ball === 'True');
+    const currentBowler = Array.isArray(inning.bowlers.player) ? inning.bowlers.player.find(bo => bo.ball === 'True') : inning.bowlers.player;
 
     const currentInningScores = Object.assign(getRefinedInningStats(inning), {
         batsmen: currentBatsMan,
