@@ -57,6 +57,22 @@ const getBattingTeam = (match) => {
     return match[teamTypes.LOCAL_TEAM].name;
 };
 
+const getOverWicket = (match) => {
+    let lastWicket = [];
+
+    const over = getLastOverScore(match.commentaries.commentary).over;
+
+    if (match.wickets && match.wickets.wicket) {
+        if (Array.isArray(match.wickets.wicket)) {
+            lastWicket = match.wickets.wicket.filter(w => over === parseInt(w.overs))
+        } else if (over === parseInt(match.wickets.wicket.overs)) {
+            lastWicket.push(match.wickets.wicket);
+        }
+    }
+
+    return lastWicket.length;
+};
+
 const getTeamPlayerList = (match) => {
     return {
         [teamTypes.VISITOR_TEAM]: match.lineups[teamTypes.VISITOR_TEAM].player.map(p => p.name),
@@ -135,6 +151,7 @@ const parseInProgressGame = async (category) => {
                 lastOverScore: cat.match.commentaries ? getLastOverScore(cat.match.commentaries.commentary).runs : 0,
                 battingTeam: getBattingTeam(cat.match),
                 moreStats: getCurrentInningScore(cat.match),
+                wicketsCount: getOverWicket(cat.match),
             });
         }
     } else {
@@ -154,6 +171,7 @@ const parseInProgressGame = async (category) => {
             lastOverScore: getLastOverScore(category.match.commentaries.commentary).runs,
             battingTeam: getBattingTeam(category.match),
             scores: getCurrentInningScore(category.match),
+            wicketsCount: getOverWicket(category.match),
         });
     }
 
@@ -180,7 +198,7 @@ const getLastOverScore = (commentaries) => {
 const main = async () => {
     const scores = await getScores();
     const oldRecordCheckQuery = "SELECT * FROM `scoreext` WHERE goalid = ? AND hometeam = ? AND visitorteam = ? AND matchdate = ? AND batting_team = ? AND `over` = ?;";
-    const insertNewRecordQuey = "INSERT INTO `scoreext` (`goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `over`, `runs`, `batting_team`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)"
+    const insertNewRecordQuey = "INSERT INTO `scoreext` (`goalid`, `matchid`, `hometeam`, `visitorteam`, `match_status`, `matchdate`, `matchtype`, `over`, `runs`, `batting_team`, `over_wicket`) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
 
 
     for (const score of scores) {
@@ -204,7 +222,8 @@ const main = async () => {
                 score.matchType,
                 score.lastOver,
                 score.lastOverScore,
-                score.battingTeam
+                score.battingTeam,
+                score.wicketsCount,
             ]);
             console.log('Updated new scores.');
         }
@@ -230,5 +249,5 @@ const loop = async () => {
         await delay(5000);
     }
 };
-// handler();
-module.exports = { handler, parseInProgressGame };
+handler();
+// module.exports = { handler, parseInProgressGame };
