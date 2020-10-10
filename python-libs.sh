@@ -1,0 +1,1 @@
+pip install pymysql && pip install python-dotenv
