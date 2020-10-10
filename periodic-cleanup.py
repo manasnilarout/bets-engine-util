@@ -1,21 +1,22 @@
 #!/usr/bin/python3
 
-# Load env to the project first
 import os
 import pymysql
 import datetime
 from dotenv import load_dotenv
-from pathlib import Path  # Python 3.6+ only
+from pathlib import Path
 
+# Load env to the project first
 env_path = Path('.') / '.env'
 load_dotenv(dotenv_path=env_path)
 
-
+# Getting ENV variables
 DB_HOST = os.getenv('MYSQL_HOST')
 DB_USER = os.getenv('MYSQL_USER')
 DB_PASS = os.getenv('MYSQL_PASSWORD')
 DB_NAME = os.getenv('MYSQL_DB')
 
+# Connect to DB
 db = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 
 try:
@@ -27,14 +28,16 @@ try:
     disable_safe_update = 'SET SQL_SAFE_UPDATES = 0;'
     query = f'DELETE FROM scoreext WHERE createdtime < \'{month_ago.isoformat()}\';'
 
-    # execute SQL query using execute() method.
+    # Execute SQL query using execute() method.
     print(f'Disabling safe update.\n- {disable_safe_update}')
     cursor.execute(disable_safe_update)
+
     print(f'Deleting records older than 30 days.\n- {query}')
     cursor.execute(query)
+
     print('Clean up finished.')
 
 finally:
-    # disconnect from server
+    # Disconnect from server
     print('Closing DB Connetion')
     db.close()
