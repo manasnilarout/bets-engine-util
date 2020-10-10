@@ -25,10 +25,6 @@ const app = express();
 app.use(bodyParser.json()); // support json encoded bodies
 app.use(bodyParser.urlencoded({ extended: true })); // support encoded bodies
 
-const set = (key, value) => {
-    redisClient.set(key, JSON.stringify(value));
-}
-
 //****  redis  cache *********//
 const get = (req, res, next) => {
     let key = req.route.path;
@@ -48,7 +44,7 @@ app.get("/upcoming/matches", get, (req, res) => {
     fetch(`https://api.b365api.com/v1/bet365/upcoming?sport_id=3&token=${BET365.token}`)
         .then(res => res.json())
         .then(json => {
-            set(req.route.path, json, 'EX', 60 * 60 * 24);
+            redisDb.setKeyWithTTL(req.route.path, json, 60 * 60);
             res.status(200).send(json);
         })
         .catch(error => {
@@ -345,7 +341,7 @@ app.get("/global/leader", (req, res) => {
     var userid = req.param('userid');
 
     if (!userid) {
-        return res.status(400).send({status:0, message: 'userid is a mandatory field.'});
+        return res.status(400).send({ status: 0, message: 'userid is a mandatory field.' });
     }
     console.log(userid)
     var results;
