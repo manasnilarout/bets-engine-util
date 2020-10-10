@@ -21,7 +21,8 @@ db = pymysql.connect(DB_HOST, DB_USER, DB_PASS, DB_NAME)
 try:
     cursor = db.cursor()
     time_now = datetime.datetime.today()
-    month_ago = time_now - datetime.timedelta(days=30)
+    persistance_days = 2
+    month_ago = time_now - datetime.timedelta(days=persistance_days)
 
     disable_safe_update = 'SET SQL_SAFE_UPDATES = 0;'
     query = f'DELETE FROM scoreext WHERE createdtime < \'{month_ago.isoformat()}\';'
