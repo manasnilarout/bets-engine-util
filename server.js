@@ -44,7 +44,7 @@ app.get("/upcoming/matches", get, (req, res) => {
     fetch(`https://api.b365api.com/v1/bet365/upcoming?sport_id=3&token=${BET365.token}`)
         .then(res => res.json())
         .then(json => {
-            redisDb.setKeyWithTTL(req.route.path, json, 60 * 60);
+            redisDb.setKeyWithTTL(req.route.path, JSON.stringify(json), 60 * 5);
             res.status(200).send(json);
         })
         .catch(error => {
