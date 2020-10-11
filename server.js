@@ -74,7 +74,7 @@ app.get("/upcoming/preodds", (req, res) => {
             fetch(`https://api.b365api.com/v3/bet365/prematch?token=${BET365.token}&FI=` + FI)
                 .then(res => res.json())
                 .then(json => {
-                    set(FI, json, 'EX', 60 * 60 * 24);
+                    redisDb.setKeyWithTTL(FI, JSON.stringify(json), 60 * 60 * 24);
                     res.status(200).send(json);
                 })
                 .catch(error => {
