@@ -33,9 +33,10 @@ try:
     cursor.execute(disable_safe_update)
 
     print(f'Deleting records older than {persistance_days} days.\n- {query}')
-    cursor.execute(query)
+    resp = cursor.execute(query)
 
-    print('Clean up finished.')
+    db.commit()
+    print(f'Clean up finished. Number of rows effected {resp}.')
 
 finally:
     # Disconnect from server

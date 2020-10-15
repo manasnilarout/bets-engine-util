@@ -183,7 +183,13 @@ const getLastOverScore = (commentaries) => {
         return {};
     }
 
-    const finishedOver = commentaries.find(sc => sc.over_ended === 'True');
+    let finishedOver;
+
+    if (Array.isArray(commentaries)) {
+        finishedOver = commentaries.find(sc => sc.over_ended === 'True');
+    } else if (commentaries.over_ended === 'True') {
+        finishedOver = commentaries;
+    }
 
     if (!finishedOver) {
         return {};
@@ -249,5 +255,5 @@ const loop = async () => {
         await delay(5000);
     }
 };
-handler();
-// module.exports = { handler, parseInProgressGame };
+// handler();
+module.exports = { handler, parseInProgressGame };
