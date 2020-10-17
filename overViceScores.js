@@ -48,7 +48,7 @@ const getBattingTeam = (match) => {
         inning = match.inning;
     }
 
-    const batsManName = inning.batsmanstats.player[0].batsman;
+    const batsManName = inning.batsmanstats.player[0] ? inning.batsmanstats.player[0].batsman : inning.batsmanstats.player.batsman;
 
     if (playersList[teamTypes.VISITOR_TEAM].indexOf(batsManName) > -1) {
         return match[teamTypes.VISITOR_TEAM].name;
@@ -91,7 +91,7 @@ const getCurrentInningScore = (match) => {
         inning = match.inning;
     }
 
-    const currentBatsMan = inning.batsmanstats.player.filter(bm => bm.status === 'not out');
+    const currentBatsMan = Array.isArray(inning.batsmanstats.player) ? inning.batsmanstats.player.filter(bm => bm.status === 'not out') : [inning.batsmanstats.player];
     const currentBowler = Array.isArray(inning.bowlers.player) ? inning.bowlers.player.find(bo => bo.ball === 'True') : inning.bowlers.player;
 
     const currentInningScores = Object.assign(getRefinedInningStats(inning), {
