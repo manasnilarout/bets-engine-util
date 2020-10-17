@@ -39,6 +39,14 @@ const get = (req, res, next) => {
     });
 }
 
+app.get('/', (req, res) => {
+    console.log('Ping Check');
+    return res.status(200).send({
+        name: 'One cricket server',
+        version: '1.0.0',
+    });
+});
+
 //****  upcoming matches *********//
 app.get("/upcoming/matches", get, (req, res) => {
     fetch(`https://api.b365api.com/v1/bet365/upcoming?sport_id=3&token=${BET365.token}`)
