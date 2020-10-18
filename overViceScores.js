@@ -75,8 +75,10 @@ const getOverWicket = (match) => {
 
 const getTeamPlayerList = (match) => {
     return {
-        [teamTypes.VISITOR_TEAM]: (match.lineups[teamTypes.VISITOR_TEAM] && match.lineups[teamTypes.VISITOR_TEAM].player) ? match.lineups[teamTypes.VISITOR_TEAM].player.map(p => p.name) : [],
-        [teamTypes.LOCAL_TEAM]: match.lineups[teamTypes.LOCAL_TEAM].player.map(p => p.name),
+        [teamTypes.VISITOR_TEAM]: (match.lineups[teamTypes.VISITOR_TEAM] && match.lineups[teamTypes.VISITOR_TEAM].player)
+            ? match.lineups[teamTypes.VISITOR_TEAM].player.map(p => p.name) : [],
+        [teamTypes.LOCAL_TEAM]: (match.lineups[teamTypes.LOCAL_TEAM] && match.lineups[teamTypes.LOCAL_TEAM].player)
+            ? match.lineups[teamTypes.LOCAL_TEAM].player.map(p => p.name) : [],
     }
 };
 
