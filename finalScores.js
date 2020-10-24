@@ -1,4 +1,5 @@
-'use strict'
+'use strict';
+
 const { createConnection } = require('mysql');
 const { DB_OPTIONS, GOAL_SERVE } = require('./env');
 const fetch = require('node-fetch');
@@ -274,7 +275,7 @@ const main = async () => {
         }
 
         if (resultRecord && !resultRecord.player_of_the_match && res.playerOfTheMatch) {
-            await runQuery(updatePlayerOfTheMatch, [res.playerOfTheMatch, resultRecord.id])
+            await runQuery(updatePlayerOfTheMatch, [res.playerOfTheMatch, resultRecord.id]);
             console.log('Updated player of the match details.');
         }
     }
