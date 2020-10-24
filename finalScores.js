@@ -281,5 +281,5 @@ const main = async () => {
 
     process.exit(0);
 };
-main();
-// module.exports = { main };
+// main();
+module.exports = { main };
