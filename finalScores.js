@@ -109,9 +109,9 @@ const getMatchResults = (category) => {
             }
 
             // Get century and half centuries
-            if (p.r > 100) {
+            if (p.r >= 100) {
                 hundredsScoredInGame += hundredsScoredInGame ? ` | ${p.batsman} : ${p.r}` : `${p.batsman} : ${p.r}`;
-            } else if (p.r > 50) {
+            } else if (p.r >= 50) {
                 batsManToScoreFifties += batsManToScoreFifties ? ` | ${p.batsman} : ${p.r}` : `${p.batsman} : ${p.r}`;
             }
 
@@ -141,14 +141,14 @@ const getMatchResults = (category) => {
         goalId: category.id,
         matchId: category.match.id,
         matchType: category.match.type + ' - ' + category.name,
-        matchDate: new Date(category.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toISOString().split('T')[0],
+        matchDate: new Date(category.match.date.replace(/(\d{1,2})\.(\d{1,2})\.(\d{1,4})/g, '$2/$1/$3')).toLocaleDateString().replace(/(\d+)\/(\d+)\/(\d+)/g, '$3-$1-$2'),
         homeTeamScore,
         homeTeam,
         won,
         visitorTeamScore,
         visitorTeam,
-        homeTeamWickets,
-        visitorTeamWickets,
+        homeTeamWickets: homeTeamWickets && homeTeamWickets.toString().match(/\d+/g)[0],
+        visitorTeamWickets: visitorTeamWickets && visitorTeamWickets.toString().match(/\d+/g)[0],
         totalMatchRuns,
         homeTeamSixes,
         visitorTeamSixes,
