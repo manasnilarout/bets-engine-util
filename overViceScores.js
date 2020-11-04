@@ -219,7 +219,7 @@ const main = async () => {
             score.lastOver
         ]);
 
-        if (!oldRecord.results.length) {
+        if (!oldRecord.results.length && score.lastOver) {
             const newRecord = await runQuery(insertNewRecordQuey, [
                 score.goalId,
                 score.matchId,
@@ -257,5 +257,5 @@ const loop = async () => {
         await delay(5000);
     }
 };
-// handler();
-module.exports = { handler, parseInProgressGame };
+handler();
+// module.exports = { handler, parseInProgressGame };
