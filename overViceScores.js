@@ -228,7 +228,7 @@ const main = async () => {
                 score.inProgress ? 'In progress' : 'Finished',
                 score.matchDate,
                 score.matchType,
-                score.lastOver,
+                score.lastOver || 0,
                 score.lastOverScore,
                 score.battingTeam,
                 score.wicketsCount,
